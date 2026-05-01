@@ -1,17 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="64" fill="#c0392b"/>
-  <rect x="96" y="72" width="320" height="368" rx="16" fill="#fff"/>
-  <!-- 红头横线 -->
-  <line x1="128" y1="148" x2="384" y2="148" stroke="#c0392b" stroke-width="6"/>
-  <!-- 文字行 -->
-  <rect x="144" y="172" width="200" height="12" rx="2" fill="#333"/>
-  <rect x="144" y="200" width="224" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="224" width="224" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="248" width="180" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="272" width="224" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="296" width="210" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="320" width="224" height="10" rx="2" fill="#888"/>
-  <rect x="144" y="344" width="160" height="10" rx="2" fill="#888"/>
-  <!-- 五角星 -->
-  <polygon points="256,88 262,108 284,108 266,120 273,140 256,128 239,140 246,120 228,108 250,108" fill="#c0392b"/>
+  <defs>
+    <linearGradient id="bg" x1="96" y1="48" x2="416" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f2747"/>
+      <stop offset="0.55" stop-color="#204d7a"/>
+      <stop offset="1" stop-color="#2f6f9e"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="176" y1="96" x2="352" y2="408" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef4fb"/>
+    </linearGradient>
+    <linearGradient id="header" x1="168" y1="126" x2="344" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9483b"/>
+      <stop offset="1" stop-color="#b91c1c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#0d1b2a" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="394" cy="110" r="34" fill="#f7c85d" opacity="0.95"/>
+  <circle cx="394" cy="110" r="16" fill="#fff4d0" opacity="0.9"/>
+
+  <g filter="url(#shadow)">
+    <path d="M152 94h180l52 52v240c0 18-14 32-32 32H152c-18 0-32-14-32-32V126c0-18 14-32 32-32z" fill="url(#paper)"/>
+    <path d="M332 94v44c0 17 13 30 30 30h44z" fill="#dce8f5"/>
+  </g>
+
+  <rect x="154" y="118" width="178" height="16" rx="8" fill="url(#header)"/>
+  <rect x="154" y="150" width="205" height="6" rx="3" fill="#d9483b" opacity="0.82"/>
+
+  <rect x="154" y="188" width="150" height="16" rx="8" fill="#143555"/>
+  <rect x="154" y="223" width="186" height="11" rx="5.5" fill="#6d8aa6"/>
+  <rect x="154" y="251" width="172" height="11" rx="5.5" fill="#6d8aa6"/>
+  <rect x="154" y="279" width="194" height="11" rx="5.5" fill="#6d8aa6"/>
+  <rect x="154" y="307" width="162" height="11" rx="5.5" fill="#6d8aa6"/>
+  <rect x="154" y="335" width="182" height="11" rx="5.5" fill="#6d8aa6"/>
+
+  <circle cx="324" cy="342" r="44" fill="#d9483b"/>
+  <path d="M324 313l8.1 16.5 18.2 2.7-13.1 12.8 3.1 18.1-16.3-8.5-16.3 8.5 3.1-18.1-13.1-12.8 18.2-2.7z" fill="#fff6dc"/>
+
+  <path d="M86 378c36-18 64-18 100 0" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="10" opacity="0.24"/>
 </svg>
