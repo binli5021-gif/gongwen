@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { parseGongwen } from '../parser'
-import { detectNodeType, extractAttachmentItemsFromLine } from '../matchers'
+import {
+  detectNodeType,
+  extractHeadingOrdinalInfo,
+  extractAttachmentItemsFromLine,
+  normalizeNodeContent,
+} from '../matchers'
 import { NodeType } from '../../types/ast'
 import type { AttachmentNode } from '../../types/ast'
 
@@ -11,6 +16,11 @@ describe('detectNodeType', () => {
     expect(detectNodeType('十二、附则')).toBe(NodeType.HEADING_1)
   })
 
+  it('识别一级标题的非标准写法（阿拉伯数字+顿号）', () => {
+    expect(detectNodeType('1、总体要求')).toBe(NodeType.HEADING_1)
+    expect(detectNodeType('12、附则')).toBe(NodeType.HEADING_1)
+  })
+
   it('识别二级标题（全角括号）', () => {
     expect(detectNodeType('（一）指导思想')).toBe(NodeType.HEADING_2)
     expect(detectNodeType('（十）保障措施')).toBe(NodeType.HEADING_2)
@@ -19,6 +29,11 @@ describe('detectNodeType', () => {
   it('识别二级标题（半角括号容错）', () => {
     expect(detectNodeType('(一)指导思想')).toBe(NodeType.HEADING_2)
     expect(detectNodeType('(二)基本原则')).toBe(NodeType.HEADING_2)
+  })
+
+  it('识别二级标题的非标准写法（缺少左括号）', () => {
+    expect(detectNodeType('一）指导思想')).toBe(NodeType.HEADING_2)
+    expect(detectNodeType('二)基本原则')).toBe(NodeType.HEADING_2)
   })
 
   it('识别三级标题（阿拉伯数字+点号）', () => {
@@ -52,6 +67,36 @@ describe('detectNodeType', () => {
   it('非日期文本不误匹配为 DATE', () => {
     expect(detectNodeType('2025年工作计划')).toBe(NodeType.PARAGRAPH)
     expect(detectNodeType('2025年10月')).toBe(NodeType.PARAGRAPH)
+  })
+})
+
+describe('normalizeNodeContent', () => {
+  it('将非标准一级标题改写为标准格式', () => {
+    expect(normalizeNodeContent(NodeType.HEADING_1, '1、总体要求')).toBe('一、总体要求')
+    expect(normalizeNodeContent(NodeType.HEADING_1, '十二）附则')).toBe('十二、附则')
+  })
+
+  it('将二级标题统一为全角括号格式', () => {
+    expect(normalizeNodeContent(NodeType.HEADING_2, '(一)指导思想')).toBe('（一）指导思想')
+    expect(normalizeNodeContent(NodeType.HEADING_2, '二）基本原则')).toBe('（二）基本原则')
+  })
+
+  it('统一三级和四级标题的标点样式', () => {
+    expect(normalizeNodeContent(NodeType.HEADING_3, '1．加强组织领导')).toBe('1.加强组织领导')
+    expect(normalizeNodeContent(NodeType.HEADING_4, '(2)明确责任分工')).toBe('（2）明确责任分工')
+  })
+})
+
+describe('extractHeadingOrdinalInfo', () => {
+  it('提取混合写法标题的序号和正文', () => {
+    expect(extractHeadingOrdinalInfo(NodeType.HEADING_1, '2、协调机制')).toEqual({
+      ordinal: 2,
+      content: '协调机制',
+    })
+    expect(extractHeadingOrdinalInfo(NodeType.HEADING_4, '（3）、协同联动')).toEqual({
+      ordinal: 3,
+      content: '协同联动',
+    })
   })
 })
 
@@ -108,6 +153,139 @@ describe('parseGongwen', () => {
     expect(ast.body[4].type).toBe(NodeType.HEADING_3)
     expect(ast.body[5].type).toBe(NodeType.HEADING_4)
     expect(ast.body[6].type).toBe(NodeType.PARAGRAPH)
+  })
+
+  it('会将非标准一级、二级标题改写成标准格式后再排版', () => {
+    const text = [
+      '关于加强安全生产工作的通知',
+      '',
+      '1、总体要求',
+      '为深入贯彻落实党的二十大精神，现就有关事项通知如下。',
+      '(一)指导思想',
+      '坚持以习近平新时代中国特色社会主义思想为指导。',
+    ].join('\n')
+
+    const ast = parseGongwen(text)
+
+    expect(ast.body[0]).toMatchObject({
+      type: NodeType.HEADING_1,
+      content: '一、总体要求',
+    })
+    expect(ast.body[2]).toMatchObject({
+      type: NodeType.HEADING_2,
+      content: '（一）指导思想',
+    })
+  })
+
+  it('会将一级标题下混写的次级标题统一纠偏为标准二级标题', () => {
+    const text = [
+      '关于建立联防联动机制的通知',
+      '',
+      '二、协调联动机制',
+      '（1）、联络互通。',
+      '根据工作需要，明确联络人。',
+      '2、信息共享。',
+      '及时通报有关情况。',
+      '(3)协同联动。',
+      '加强协同处置。',
+      '（四）队伍共建。',
+      '加强队伍建设。',
+    ].join('\n')
+
+    const ast = parseGongwen(text)
+
+    expect(ast.body[0].content).toBe('二、协调联动机制')
+    expect(ast.body[1]).toMatchObject({
+      type: NodeType.HEADING_2,
+      content: '（一）联络互通。',
+    })
+    expect(ast.body[3]).toMatchObject({
+      type: NodeType.HEADING_2,
+      content: '（二）信息共享。',
+    })
+    expect(ast.body[5]).toMatchObject({
+      type: NodeType.HEADING_2,
+      content: '（三）协同联动。',
+    })
+    expect(ast.body[7]).toMatchObject({
+      type: NodeType.HEADING_2,
+      content: '（四）队伍共建。',
+    })
+  })
+
+  it('会将二级标题下混写的次级标题统一纠偏为标准三级标题', () => {
+    const text = [
+      '关于建立联防联动机制的通知',
+      '',
+      '一、总体要求',
+      '（一）工作原则',
+      '（1）统一指挥。',
+      '坚持统一指挥调度。',
+      '2、分级负责。',
+      '按照职责分工落实责任。',
+      '(3)快速响应。',
+      '提升处置效率。',
+      '4.协同联动。',
+      '形成工作合力。',
+    ].join('\n')
+
+    const ast = parseGongwen(text)
+
+    expect(ast.body[1].content).toBe('（一）工作原则')
+    expect(ast.body[2]).toMatchObject({
+      type: NodeType.HEADING_3,
+      content: '1.统一指挥。',
+    })
+    expect(ast.body[4]).toMatchObject({
+      type: NodeType.HEADING_3,
+      content: '2.分级负责。',
+    })
+    expect(ast.body[6]).toMatchObject({
+      type: NodeType.HEADING_3,
+      content: '3.快速响应。',
+    })
+    expect(ast.body[8]).toMatchObject({
+      type: NodeType.HEADING_3,
+      content: '4.协同联动。',
+    })
+  })
+
+  it('会将三级标题下混写的次级标题统一纠偏为标准四级标题', () => {
+    const text = [
+      '关于建立联防联动机制的通知',
+      '',
+      '一、总体要求',
+      '（一）工作原则',
+      '1.加强统筹。',
+      '1、健全机制。',
+      '完善制度安排。',
+      '(2)明确分工。',
+      '压实岗位责任。',
+      '3.强化落实。',
+      '确保措施落地。',
+      '（4）跟踪问效。',
+      '形成闭环管理。',
+    ].join('\n')
+
+    const ast = parseGongwen(text)
+
+    expect(ast.body[2].content).toBe('1.加强统筹。')
+    expect(ast.body[3]).toMatchObject({
+      type: NodeType.HEADING_4,
+      content: '（1）健全机制。',
+    })
+    expect(ast.body[5]).toMatchObject({
+      type: NodeType.HEADING_4,
+      content: '（2）明确分工。',
+    })
+    expect(ast.body[7]).toMatchObject({
+      type: NodeType.HEADING_4,
+      content: '（3）强化落实。',
+    })
+    expect(ast.body[9]).toMatchObject({
+      type: NodeType.HEADING_4,
+      content: '（4）跟踪问效。',
+    })
   })
 
   it('正确记录行号', () => {
@@ -241,6 +419,14 @@ describe('附件说明解析', () => {
       expect(node.items[0].name).toBe('实施方案')
     })
 
+    it('单附件名称末尾标点会自动清理', () => {
+      const text = '标题\n\n附件：第一人称的格式。'
+      const ast = parseGongwen(text)
+
+      const node = ast.body[0] as AttachmentNode
+      expect(node.items[0].name).toBe('第一人称的格式')
+    })
+
     it('冒号后数字不是1时视为单附件', () => {
       const text = '标题\n\n附件：2.责任清单'
       const ast = parseGongwen(text)
@@ -346,6 +532,15 @@ describe('附件说明解析', () => {
       expect(node.items).toHaveLength(2)
     })
 
+    it('多附件名称末尾标点会自动清理', () => {
+      const text = '标题\n\n附件：1.实施方案。 2.责任清单；'
+      const ast = parseGongwen(text)
+
+      const node = ast.body[0] as AttachmentNode
+      expect(node.items[0].name).toBe('实施方案')
+      expect(node.items[1].name).toBe('责任清单')
+    })
+
     it('多附件后正确解析后续内容', () => {
       const text = [
         '标题',
@@ -370,6 +565,20 @@ describe('发文机关署名识别', () => {
       '',
       '国务院办公厅',
       '2025年10月21日',
+    ].join('\n')
+    const ast = parseGongwen(text)
+
+    expect(ast.body).toHaveLength(2)
+    expect(ast.body[0].type).toBe(NodeType.SIGNATURE)
+    expect(ast.body[1].type).toBe(NodeType.DATE)
+  })
+
+  it('基层单位名称也识别为 SIGNATURE', () => {
+    const text = [
+      '标题',
+      '',
+      '珠海市香洲区湾仔街道桂园社区居委会',
+      '2026年5月1日',
     ].join('\n')
     const ast = parseGongwen(text)
 

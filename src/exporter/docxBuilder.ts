@@ -499,7 +499,7 @@ export function buildDocument(ast: GongwenAST, config: DocumentConfig): Document
     const node = ast.body[i]
     const isFirstBodyNode = i === 0
     
-    // 发文机关署名前插入 2 个空行
+    // 署名前预留空行：不加印章空一行；加盖印章时暂按两行预留印章位置
     if (node.type === NodeType.SIGNATURE) {
       const bodyLineSpacing = ptToTwip(config.body.lineSpacing)
       const bodyFont = {
@@ -509,8 +509,9 @@ export function buildDocument(ast: GongwenAST, config: DocumentConfig): Document
         cs: 'Times New Roman',
       }
       const bodyFontSize = config.body.fontSize * 2
-      
-      for (let j = 0; j < 2; j++) {
+
+      const emptyLineCount = config.specialOptions.hasStamp ? 2 : 1
+      for (let j = 0; j < emptyLineCount; j++) {
         children.push(new Paragraph({
           spacing: { line: bodyLineSpacing, lineRule: LineRuleType.EXACT, before: 0, after: 0 },
           children: [new TextRun({ font: bodyFont, size: bodyFontSize, text: '' })],

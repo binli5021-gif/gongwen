@@ -60,9 +60,17 @@ export const DocumentFlow = memo(function DocumentFlow({
         const elements: React.ReactNode[] = []
 
         if (node.type === NodeType.SIGNATURE) {
-          for (let j = 0; j < 2; j++) {
+          const emptyLineCount = hasStamp ? 2 : 1
+          for (let j = 0; j < emptyLineCount; j++) {
             elements.push(
-              <p key={`empty-${node.lineNumber}-${j}`} className="a4-empty-line">{'\u200B'}</p>
+              <p
+                key={`empty-${node.lineNumber}-${j}`}
+                className="a4-empty-line"
+                data-node-type="SIGNATURE_SPACER"
+                data-keep-group={`signature-${node.lineNumber}`}
+              >
+                {'\u200B'}
+              </p>
             )
           }
         }
@@ -81,6 +89,15 @@ export const DocumentFlow = memo(function DocumentFlow({
                 node.type === NodeType.HEADING_1 ? 'a4-h1'
                 : node.type === NodeType.HEADING_2 ? 'a4-h2'
                 : NODE_CLASS_MAP[node.type]
+              }
+              data-node-type={node.type}
+              data-line-number={node.lineNumber}
+              data-keep-group={
+                node.type === NodeType.SIGNATURE
+                  ? `signature-${node.lineNumber}`
+                  : node.type === NodeType.DATE && body[index - 1]?.type === NodeType.SIGNATURE
+                    ? `signature-${body[index - 1].lineNumber}`
+                    : undefined
               }
               style={getNodeStyle(node, index, body, hasStamp)}
             >

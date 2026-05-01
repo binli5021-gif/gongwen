@@ -177,13 +177,26 @@ export function usePagination(
 
       // ⑥ 收集所有行的 top/bottom 位置
       interface LinePos { top: number; bottom: number }
+      interface ProtectedGroupRange { top: number; bottom: number }
       const lines: LinePos[] = []
+      const protectedGroups = new Map<string, ProtectedGroupRange>()
 
       for (const p of paragraphs) {
         const pTop = p.offsetTop
         const pHeight = p.offsetHeight
         const computedStyle = getComputedStyle(p)
         const lineHeight = parseFloat(computedStyle.lineHeight)
+        const keepGroup = p.dataset.keepGroup
+
+        if (keepGroup) {
+          const existing = protectedGroups.get(keepGroup)
+          if (existing) {
+            existing.top = Math.min(existing.top, pTop)
+            existing.bottom = Math.max(existing.bottom, pTop + pHeight)
+          } else {
+            protectedGroups.set(keepGroup, { top: pTop, bottom: pTop + pHeight })
+          }
+        }
 
         if (isNaN(lineHeight) || lineHeight <= 0 || pHeight <= lineHeight * 1.5) {
           // 单行段落（标题等）：整段作为一行
@@ -205,6 +218,24 @@ export function usePagination(
 
       const totalContentHeight = lines.length > 0 ? lines[lines.length - 1].bottom : 0
 
+      function adjustBreakOffsetsForProtectedGroups(offsets: number[]): number[] {
+        if (protectedGroups.size === 0 || offsets.length <= 1) return offsets
+
+        let adjusted = offsets.slice()
+        for (const range of protectedGroups.values()) {
+          adjusted = adjusted.map((offset, index) => {
+            if (index === 0) return offset
+            if (offset > range.top + 0.5 && offset < range.bottom - 0.5) {
+              return range.top
+            }
+            return offset
+          })
+        }
+
+        adjusted.sort((a, b) => a - b)
+        return adjusted.filter((offset, index) => index === 0 || Math.abs(offset - adjusted[index - 1]) > 0.5)
+      }
+
       // ⑦ Phase 1: 按行边界分页
       //    首页使用 firstPageAvailable（扣除版头），后续页使用 fullAvailable。
       const breakOffsets: number[] = [0]
@@ -221,6 +252,8 @@ export function usePagination(
         }
       }
 
+      breakOffsets.splice(0, breakOffsets.length, ...adjustBreakOffsetsForProtectedGroups(breakOffsets))
+
       // ⑧ Phase 2: 确保末页有足够空间容纳版记
       //    版记在末页渲染，其高度会挤压 viewport 的可用空间。
       //    如果末页内容 + 版记 > 全量高度，需要将溢出行推到新页。
@@ -229,6 +262,7 @@ export function usePagination(
         let stable = false
         while (!stable && maxIterations-- > 0) {
           stable = true
+          breakOffsets.splice(0, breakOffsets.length, ...adjustBreakOffsetsForProtectedGroups(breakOffsets))
           const lastIdx = breakOffsets.length - 1
           const lastStart = breakOffsets[lastIdx]
           const isAlsoFirstPage = lastIdx === 0
@@ -249,6 +283,8 @@ export function usePagination(
           }
         }
       }
+
+      breakOffsets.splice(0, breakOffsets.length, ...adjustBreakOffsetsForProtectedGroups(breakOffsets))
 
       // ⑨ 根据断点计算每页 clipHeight
       //    clipHeight = 下一页 offsetY - 当前页 offsetY，天然对齐行边界。

@@ -1,6 +1,14 @@
 import type { DocumentNode, GongwenAST, AttachmentNode } from '../types/ast'
 import { NodeType } from '../types/ast'
-import { detectNodeType, HEADING_1_RE, ATTACHMENT_RE, extractAttachmentItemsFromLine } from './matchers'
+import {
+  arabicToChinese,
+  detectNodeType,
+  extractHeadingOrdinalInfo,
+  normalizeNodeContent,
+  HEADING_1_RE,
+  ATTACHMENT_RE,
+  extractAttachmentItemsFromLine,
+} from './matchers'
 
 /** 不应被识别为发文机关署名的结尾标点 */
 const SIGNATURE_EXCLUDE_ENDINGS = ['。', '：', ':', '；', ';', '！', '!', '？', '?', '，', ',']
@@ -9,6 +17,10 @@ const SIGNATURE_ORG_HINTS = [
   '人民政府',
   '政府',
   '委员会',
+  '居民委员会',
+  '村民委员会',
+  '居委会',
+  '村委会',
   '办公厅',
   '办公室',
   '党委',
@@ -22,6 +34,13 @@ const SIGNATURE_ORG_HINTS = [
   '集团',
   '公司',
   '中央',
+  '街道',
+  '社区',
+  '管理区',
+  '开发区',
+  '新区',
+  '中心',
+  '工作站',
 ]
 
 /**
@@ -31,7 +50,8 @@ const SIGNATURE_ORG_HINTS = [
 function isPossibleSignature(node: DocumentNode | undefined): boolean {
   if (!node || node.type !== NodeType.PARAGRAPH) return false
   const content = node.content.trim()
-  if (content.length === 0 || content.length > 15) return false
+  if (content.length === 0 || content.length > 40) return false
+  if (content.length > 15 && !hasSignatureOrgHint(content)) return false
   return !SIGNATURE_EXCLUDE_ENDINGS.some(ending => content.endsWith(ending))
 }
 
@@ -57,8 +77,12 @@ function buildSingleAttachmentNode(line: string, contentAfterColon: string, curr
     content: line,
     lineNumber: currentIndex + 1,
     isMultiple: false,
-    items: [{ index: 0, name: contentAfterColon }],
+    items: [{ index: 0, name: normalizeAttachmentName(contentAfterColon) }],
   }
+}
+
+function normalizeAttachmentName(name: string): string {
+  return name.trim().replace(/[。；;，,、：:]+$/g, '')
 }
 
 /**
@@ -144,7 +168,10 @@ function parseAttachment(
       }
     }
 
-    items.push(...foundItems)
+    items.push(...foundItems.map((item) => ({
+      ...item,
+      name: normalizeAttachmentName(item.name),
+    })))
     expectedIndex += foundItems.length
 
     // 当前行的附件项已提取完毕，检查下一行是否有后续附件
@@ -177,6 +204,128 @@ function parseAttachment(
     },
     nextIndex: lastConsumedIndex + 1,
   }
+}
+
+interface HeadingHarmonizeConfig {
+  parentType: NodeType
+  targetType: NodeType
+  acceptedTypes: NodeType[]
+  formatContent: (ordinal: number, content: string) => string
+}
+
+const HEADING_LEVEL_MAP: Record<NodeType, number> = {
+  [NodeType.DOCUMENT_TITLE]: 0,
+  [NodeType.HEADING_1]: 1,
+  [NodeType.HEADING_2]: 2,
+  [NodeType.HEADING_3]: 3,
+  [NodeType.HEADING_4]: 4,
+  [NodeType.PARAGRAPH]: 99,
+  [NodeType.ADDRESSEE]: 99,
+  [NodeType.ATTACHMENT]: 99,
+  [NodeType.SIGNATURE]: 99,
+  [NodeType.DATE]: 99,
+}
+
+function harmonizeHeadingLevel(body: DocumentNode[], config: HeadingHarmonizeConfig): DocumentNode[] {
+  const normalized = [...body]
+  let i = 0
+
+  while (i < normalized.length) {
+    if (normalized[i].type !== config.parentType) {
+      i++
+      continue
+    }
+
+    const parentInfo = extractHeadingOrdinalInfo(normalized[i].type, normalized[i].content)
+    const candidates: Array<{ index: number; ordinal: number; content: string; type: NodeType }> = []
+    let expectedChildOrdinal = 1
+    let seenTargetType = false
+    let j = i + 1
+
+    for (; j < normalized.length; j++) {
+      const node = normalized[j]
+
+      if (node.type === config.parentType) {
+        const info = extractHeadingOrdinalInfo(node.type, node.content)
+        const isNextTopLevelHeading = Boolean(
+          parentInfo &&
+          info &&
+          info.ordinal === parentInfo.ordinal + 1,
+        )
+
+        if (isNextTopLevelHeading) {
+          break
+        }
+      }
+
+      if (!config.acceptedTypes.includes(node.type)) {
+        continue
+      }
+
+      if (
+        seenTargetType &&
+        HEADING_LEVEL_MAP[node.type] > HEADING_LEVEL_MAP[config.targetType]
+      ) {
+        continue
+      }
+
+      const info = extractHeadingOrdinalInfo(node.type, node.content)
+      if (!info) continue
+      if (info.ordinal !== expectedChildOrdinal) continue
+
+      candidates.push({
+        index: j,
+        ordinal: info.ordinal,
+        content: info.content,
+        type: node.type,
+      })
+      if (node.type === config.targetType) {
+        seenTargetType = true
+      }
+      expectedChildOrdinal++
+    }
+
+    if (candidates.length >= 2) {
+      const hasMixedLevel = candidates.some((candidate) => candidate.type !== config.targetType)
+
+      if (hasMixedLevel) {
+        for (const candidate of candidates) {
+          normalized[candidate.index] = {
+            ...normalized[candidate.index],
+            type: config.targetType,
+            content: config.formatContent(candidate.ordinal, candidate.content),
+          }
+        }
+      }
+    }
+
+    i = j
+  }
+
+  return normalized
+}
+
+function harmonizeHeadingHierarchy(body: DocumentNode[]): DocumentNode[] {
+  const secondLevel = harmonizeHeadingLevel(body, {
+    parentType: NodeType.HEADING_1,
+    targetType: NodeType.HEADING_2,
+    acceptedTypes: [NodeType.HEADING_1, NodeType.HEADING_2, NodeType.HEADING_3, NodeType.HEADING_4],
+    formatContent: (ordinal, content) => `（${arabicToChinese(ordinal)}）${content}`,
+  })
+
+  const thirdLevel = harmonizeHeadingLevel(secondLevel, {
+    parentType: NodeType.HEADING_2,
+    targetType: NodeType.HEADING_3,
+    acceptedTypes: [NodeType.HEADING_1, NodeType.HEADING_2, NodeType.HEADING_3, NodeType.HEADING_4],
+    formatContent: (ordinal, content) => `${ordinal}.${content}`,
+  })
+
+  return harmonizeHeadingLevel(thirdLevel, {
+    parentType: NodeType.HEADING_3,
+    targetType: NodeType.HEADING_4,
+    acceptedTypes: [NodeType.HEADING_1, NodeType.HEADING_3, NodeType.HEADING_4],
+    formatContent: (ordinal, content) => `（${ordinal}）${content}`,
+  })
 }
 
 /**
@@ -239,7 +388,7 @@ export function parseGongwen(text: string): GongwenAST {
 
     // 正则检测类型
     const type = detectNodeType(trimmed)
-    body.push({ type, content: trimmed, lineNumber })
+    body.push({ type, content: normalizeNodeContent(type, trimmed), lineNumber })
     i++
   }
 
@@ -257,5 +406,5 @@ export function parseGongwen(text: string): GongwenAST {
     body[body.length - 1] = { ...lastNode, type: NodeType.SIGNATURE }
   }
 
-  return { title, body }
+  return { title, body: harmonizeHeadingHierarchy(body) }
 }

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { DocumentConfigProvider } from './contexts/DocumentConfigContext'
+import { DocumentConfigProvider } from './contexts/documentConfigProvider'
 import './index.css'
 import App from './App.tsx'
 

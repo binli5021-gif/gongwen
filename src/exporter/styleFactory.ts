@@ -272,7 +272,7 @@ export function getAttachmentParagraphStyle(
   if (!isMultiple) {
     // 单附件：左空 5 字符（2 + 3），悬挂缩进 3 字符（用于换行对齐）
     return {
-      alignment: AlignmentType.JUSTIFIED,
+      alignment: AlignmentType.LEFT,
       spacing,
       indent: {
         left: 5 * charWidthTwips,
@@ -285,7 +285,7 @@ export function getAttachmentParagraphStyle(
     // 多附件第一行：左空 5 字符（2 + 3），悬挂缩进 3 字符
     // 首行从 2 字符位置开始（5 - 3 = 2），换行后从 5 字符位置开始
     return {
-      alignment: AlignmentType.JUSTIFIED,
+      alignment: AlignmentType.LEFT,
       spacing,
       indent: {
         left: 5 * charWidthTwips,
@@ -296,7 +296,7 @@ export function getAttachmentParagraphStyle(
 
   // 多附件后续行：左空 5 字符（2 + 3），首行和换行后都从 5 字符开始
   return {
-    alignment: AlignmentType.JUSTIFIED,
+    alignment: AlignmentType.LEFT,
     spacing: { line: lineSpacingValue, lineRule: LineRuleType.EXACT },
     indent: {
       left: 5 * charWidthTwips,
