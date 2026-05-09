@@ -27,16 +27,20 @@ const INDENT_SELECT_OPTIONS = INDENT_OPTIONS.map((opt) => ({
 }))
 
 const PROJECT_INFO = {
-  repoUrl: 'https://github.com/hehecat/gongwen',
-  releasesUrl: 'https://github.com/hehecat/gongwen/releases',
-  authorEmail: 'hehecat@outlook.com',
-  recentUpdates: __APP_RECENT_UPDATES__,
+  repoUrl: 'https://github.com/binli5021-gif/gongwen',
+  releasesUrl: 'https://github.com/binli5021-gif/gongwen/releases',
+  authorEmail: 'binli5021@gmial.com',
+  intro: [
+    '本工具用于将常见中文公文内容快速整理为更接近 GB/T 9704 的规范格式。',
+    '支持正文导入、标题层级识别、附件说明整理、落款排版和 DOCX 导出。',
+    '适合办公室、公文写作、社区和活动方案等正式文本的轻量规范化处理。',
+  ],
+  recentUpdates: [
+    '修复中文句号、冒号等标点在导出 Word 时掉到下一行行首的问题。',
+    '增强标题层级自动纠偏，支持一至四级标题混写后的统一规范化。',
+    '优化附件说明、基层单位落款识别，以及署名与日期的同页编排。',
+  ],
 }
-
-const DONATION_QR_CODES = [
-  { label: '支付宝', src: `${import.meta.env.BASE_URL}alipay.png` },
-  { label: '微信', src: `${import.meta.env.BASE_URL}wechat.png` },
-]
 
 /** 通用 select 组件 */
 function SelectField({
@@ -639,7 +643,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <div className="settings-footer-left">
             <a
               className="settings-btn settings-btn--download"
-              href="https://github.com/hehecat/gongwen/releases/latest/download/gongwen.html"
+              href="https://github.com/binli5021-gif/gongwen/releases/latest/download/gongwen.html"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -656,56 +660,47 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </button>
             {showProjectInfo && (
               <div className="settings-info-card" id="settings-project-info" role="dialog" aria-label="项目信息">
-                <div className="settings-info-layout">
-                  <div className="settings-info-main">
-                    <div className="settings-info-item">
-                      <span className="settings-info-label">GitHub 地址</span>
-                      <a
-                        className="settings-info-link"
-                        href={PROJECT_INFO.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {PROJECT_INFO.repoUrl}
-                      </a>
-                    </div>
-                    <div className="settings-info-item">
-                      <span className="settings-info-label">更新版本说明</span>
-                      {PROJECT_INFO.recentUpdates.length > 0 ? (
-                        <ul className="settings-info-list">
-                          {PROJECT_INFO.recentUpdates.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="settings-hint settings-hint--tight">当前构建未包含可用的提交记录。</p>
-                      )}
-                      <a
-                        className="settings-info-link"
-                        href={PROJECT_INFO.releasesUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        查看全部 Releases
-                      </a>
-                    </div>
-                    <div className="settings-info-item settings-info-contact">
-                      <span className="settings-info-label">作者联系邮箱</span>
-                      <a className="settings-info-link" href={`mailto:${PROJECT_INFO.authorEmail}`}>
-                        {PROJECT_INFO.authorEmail}
-                      </a>
-                    </div>
-                  </div>
-                  <div className="settings-donate">
-                    <span className="settings-info-label settings-info-label--support">打赏作者</span>
-                    <div className="settings-donate-grid">
-                      {DONATION_QR_CODES.map((item) => (
-                        <figure key={item.label} className="settings-donate-card">
-                          <img className="settings-donate-image" src={item.src} alt={`${item.label}收款码`} />
-                          <figcaption className="settings-donate-name">{item.label}</figcaption>
-                        </figure>
+                <div className="settings-info-main">
+                  <div className="settings-info-item">
+                    <span className="settings-info-label">项目信息</span>
+                    <ul className="settings-info-list">
+                      {PROJECT_INFO.intro.map((item) => (
+                        <li key={item}>{item}</li>
                       ))}
-                    </div>
+                    </ul>
+                  </div>
+                  <div className="settings-info-item">
+                    <span className="settings-info-label">GitHub 地址</span>
+                    <a
+                      className="settings-info-link"
+                      href={PROJECT_INFO.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {PROJECT_INFO.repoUrl}
+                    </a>
+                  </div>
+                  <div className="settings-info-item">
+                    <span className="settings-info-label">更新版本说明</span>
+                    <ul className="settings-info-list">
+                      {PROJECT_INFO.recentUpdates.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <a
+                      className="settings-info-link"
+                      href={PROJECT_INFO.releasesUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      查看我的 GitHub Releases
+                    </a>
+                  </div>
+                  <div className="settings-info-item settings-info-contact">
+                    <span className="settings-info-label">联系邮箱</span>
+                    <a className="settings-info-link" href={`mailto:${PROJECT_INFO.authorEmail}`}>
+                      {PROJECT_INFO.authorEmail}
+                    </a>
                   </div>
                 </div>
               </div>
