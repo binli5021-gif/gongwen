@@ -8,7 +8,7 @@ import {
 } from 'docx'
 import { NodeType } from '../types/ast'
 import type { DocumentConfig } from '../types/documentConfig'
-import { ptToTwip, cmToTwip, CHARS_PER_LINE } from '../types/documentConfig'
+import { ptToTwip } from '../types/documentConfig'
 
 const DEFAULT_TEXT_COLOR = '000000'
 
@@ -29,8 +29,11 @@ function font(eastAsia: string, ascii = 'Times New Roman'): IFontAttributesPrope
 
 /**
  * 计算首行缩进值（twips）
- * 缩进 = 字符数 × (字号 + 字符间距)
- * 字符间距用于确保每行恰好28字，缩进也需要同步调整
+ * 缩进 = 字符数 × 字号
+ *
+ * 之前为了逼近“每行 28 字”给所有字符附加了额外字距，
+ * 这会导致 Word 在换行时把句号、冒号等中文标点挤到下一行开头。
+ * 这里改为按字号估算字符宽度，优先保证中文标点换行正常。
  */
 function calculateFirstLineIndent(config: DocumentConfig): number {
   return calculateCharWidth(config) * config.body.firstLineIndent
@@ -58,12 +61,10 @@ export function createCharacterFirstLineIndent(config: DocumentConfig): BuilderE
 
 /**
  * 计算单个字符宽度（twips）
- * 字符宽度 = 字号 + 字符间距
+ * 字符宽度近似采用字号本身
  */
 function calculateCharWidth(config: DocumentConfig): number {
-  const availableTwips = 11906 - cmToTwip(config.margins.left) - cmToTwip(config.margins.right)
-  const charSpacingTwips = Math.floor(availableTwips / CHARS_PER_LINE - config.body.fontSize * 20)
-  return config.body.fontSize * 20 + charSpacingTwips
+  return config.body.fontSize * 20
 }
 
 /**
@@ -192,11 +193,6 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
   const bodyFontSize = config.body.fontSize * 2 // pt → half-point
   const titleFontSize = config.title.fontSize * 2
 
-  // 字符间距微调：使每行恰好 28 字 (GB/T 9704)
-  // characterSpacing 单位为 twips (1/20 pt)，向下取整确保不超出可用宽度
-  const availableTwips = 11906 - cmToTwip(config.margins.left) - cmToTwip(config.margins.right)
-  const charSpacing = Math.floor(availableTwips / CHARS_PER_LINE - config.body.fontSize * 20)
-
   switch (type) {
     case NodeType.DOCUMENT_TITLE:
       return {
@@ -210,7 +206,6 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
       return {
         font: font(config.advanced.h1.fontFamily, config.advanced.h1.asciiFontFamily || config.advanced.h1.fontFamily),
         size: config.advanced.h1.fontSize * 2,
-        characterSpacing: charSpacing,
         color: DEFAULT_TEXT_COLOR,
         italics: false,
       }
@@ -219,7 +214,6 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
       return {
         font: font(config.advanced.h2.fontFamily, config.advanced.h2.asciiFontFamily || config.advanced.h2.fontFamily),
         size: config.advanced.h2.fontSize * 2,
-        characterSpacing: charSpacing,
         color: DEFAULT_TEXT_COLOR,
         italics: false,
       }
@@ -229,7 +223,6 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
         font: font(config.advanced.h3.fontFamily, config.advanced.h3.asciiFontFamily || config.advanced.h3.fontFamily),
         size: config.advanced.h3.fontSize * 2,
         bold: config.specialOptions.boldHeading3,
-        characterSpacing: charSpacing,
         color: DEFAULT_TEXT_COLOR,
         italics: false,
       }
@@ -243,7 +236,6 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
       return {
         font: font(config.body.fontFamily),
         size: bodyFontSize,
-        characterSpacing: charSpacing,
         color: DEFAULT_TEXT_COLOR,
         italics: false,
       }
@@ -310,8 +302,6 @@ export function getAttachmentParagraphStyle(
  */
 export function getAttachmentRunStyle(config: DocumentConfig): Partial<IRunOptions> {
   const bodyFontSize = config.body.fontSize * 2
-  const availableTwips = 11906 - cmToTwip(config.margins.left) - cmToTwip(config.margins.right)
-  const charSpacing = Math.floor(availableTwips / CHARS_PER_LINE - config.body.fontSize * 20)
 
   return {
     font: {
@@ -321,7 +311,6 @@ export function getAttachmentRunStyle(config: DocumentConfig): Partial<IRunOptio
       cs: config.body.fontFamily,
     },
     size: bodyFontSize,
-    characterSpacing: charSpacing,
     color: DEFAULT_TEXT_COLOR,
     italics: false,
   }

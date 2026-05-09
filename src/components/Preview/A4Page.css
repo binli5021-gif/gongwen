@@ -36,7 +36,7 @@
   overflow: hidden;
 }
 
-/* 字符网格间距：微调 letter-spacing 使每行恰好 28 字 (GB/T 9704) */
+/* 中文公文预览：避免为凑字数强行加字距，否则句号、冒号容易掉到下一行行首 */
 .a4-title,
 .a4-h1,
 .a4-h2,
@@ -46,7 +46,10 @@
 .a4-addressee,
 .a4-attachment,
 .a4-date {
-  letter-spacing: var(--char-spacing, 0);
+  letter-spacing: 0;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 /* 公文标题: 方正小标宋_GBK 22pt 居中, 固定行距 */
@@ -198,7 +201,10 @@
   text-align: left;
   line-height: var(--body-line-height, 29px);
   margin: 0;
-  letter-spacing: var(--char-spacing, 0);
+  letter-spacing: 0;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 /* 多附件项：左缩进 5 字符（2 + 3），首行和换行后都从 5 字符开始 */
