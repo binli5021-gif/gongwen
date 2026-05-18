@@ -198,6 +198,7 @@ export function getRunStyle(type: NodeType, config: DocumentConfig): Partial<IRu
       return {
         font: font(config.title.fontFamily),
         size: titleFontSize,
+        bold: true,
         color: DEFAULT_TEXT_COLOR,
         italics: false,
       }
