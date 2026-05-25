@@ -78,7 +78,7 @@ export const Toolbar = memo(function Toolbar({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".docx,.txt,.doc,.wps"
+          accept=".docx,.txt"
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />

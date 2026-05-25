@@ -116,7 +116,11 @@ export function DocumentConfigProvider({ children }: { children: ReactNode }) {
 
   // 持久化到 localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    } catch {
+      // 存储被禁用或空间不足时静默忽略，避免设置面板崩溃
+    }
   }, [config])
 
   return (

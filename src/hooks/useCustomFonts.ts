@@ -41,8 +41,12 @@ function getServerSnapshot(): string[] {
 }
 
 function setFonts(fonts: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(fonts))
-  notify()
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fonts))
+    notify()
+  } catch {
+    // 存储被禁用或空间不足时忽略，保留当前 UI 可用
+  }
 }
 
 // ---- Hook ----
