@@ -56,7 +56,7 @@
 .a4-title {
   font-family: var(--title-font, 'FZXiaoBiaoSong-B05S'), 'STSong', 'SimSun', serif;
   font-size: var(--title-size, 22px);
-  font-weight: bold;
+  font-weight: normal;
   text-align: center;
   line-height: var(--title-line-height, 29px);
   margin: 0;

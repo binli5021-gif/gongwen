@@ -59,6 +59,12 @@ describe('getAttachmentParagraphStyle', () => {
 })
 
 describe('getRunStyle', () => {
+  it('主标题默认不加粗', () => {
+    const style = getRunStyle(NodeType.DOCUMENT_TITLE, DEFAULT_CONFIG)
+
+    expect(style.bold).toBe(false)
+  })
+
   it('一级标题显式使用黑色文字，避免继承 Word 默认蓝色标题样式', () => {
     const style = getRunStyle(NodeType.HEADING_1, DEFAULT_CONFIG)
 
