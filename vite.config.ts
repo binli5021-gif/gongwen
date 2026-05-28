@@ -8,10 +8,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // 单文件模式：SINGLE_FILE=1 npm run build
 const isSingleFile = !!process.env.SINGLE_FILE
+const appBase = process.env.APP_BASE?.trim()
 
 // GitHub Pages 需要子路径前缀，Vercel / 本地开发使用根路径
 // 单文件模式强制使用相对路径以支持离线双击打开
-const base = isSingleFile ? './' : process.env.GITHUB_ACTIONS ? '/gongwen/' : '/'
+const base = isSingleFile ? './' : appBase || (process.env.GITHUB_ACTIONS ? '/gongwen/' : '/')
 
 function formatDate(date: Date): string {
   const year = date.getFullYear()
