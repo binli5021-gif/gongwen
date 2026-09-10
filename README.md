@@ -60,15 +60,17 @@ http://127.0.0.1:4173/
 
 ## Windows 使用
 
-### 直接使用离线版
+### 下载仓库到本地使用
 
-如果只是使用，不需要开发环境，推荐直接下载离线单文件版本：
+如果不想使用在线版，可以直接下载本仓库源码到 Windows 本地运行：
 
-1. 打开 [GitHub Releases](https://github.com/binli5021-gif/gongwen/releases/latest)
-2. 下载 `gongwen.html`
-3. 在 Windows 中双击打开即可使用
+1. 下载 [GitHub 仓库 ZIP](https://github.com/binli5021-gif/gongwen/archive/refs/heads/main.zip)
+2. 解压文件，并在解压后的 `gongwen-main` 文件夹中打开终端
+3. 执行 `npm install`
+4. 执行 `npm run dev`
+5. 用浏览器打开终端显示的本地地址即可使用
 
-### 在 Windows 本地运行源码
+### 使用 Git 在 Windows 本地运行源码
 
 建议环境：
 
