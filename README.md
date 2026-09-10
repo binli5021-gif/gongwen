@@ -11,11 +11,11 @@
 - 无印章落款空一行
 - 署名与成文日期避免跨页拆分
 
-🔗 **在线体验：https://hehecat.github.io/gongwen/**
+🔗 **在线体验：https://gongwen.cyberlee.top/**
 
-📦 **离线版下载：[Releases](https://github.com/hehecat/gongwen/releases/latest)** — 下载 `gongwen.html`，双击即可使用
+📦 **离线版下载：[下载 GitHub 仓库 ZIP](https://github.com/binli5021-gif/gongwen/archive/refs/heads/main.zip)** — 下载并解压后，按照下方“本地开发”说明运行，即可在本地使用
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhehecat%2Fgongwen)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbinli5021-gif%2Fgongwen)
 
 ## 功能特性
 
