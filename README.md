@@ -43,7 +43,7 @@
 - [docx](https://github.com/dolanmedia/docx) — DOCX 文件生成
 - [mammoth](https://github.com/mwilliamson/mammoth.js) — .docx 文件纯文本提取
 - [file-saver](https://github.com/nickeahman/FileSaver.js) — 浏览器端文件下载
-- GitHub Actions — 自动构建部署到 GitHub Pages & 发布离线版到 Releases
+- GitHub Actions — 自动构建 GitHub Pages 并发布离线版到 Releases；线上版本由 Vercel 部署
 
 ## 本地开发
 
@@ -64,7 +64,7 @@ http://127.0.0.1:4173/
 
 如果只是使用，不需要开发环境，推荐直接下载离线单文件版本：
 
-1. 打开 [Releases](https://github.com/hehecat/gongwen/releases/latest)
+1. 打开 [GitHub Releases](https://github.com/binli5021-gif/gongwen/releases/latest)
 2. 下载 `gongwen.html`
 3. 在 Windows 中双击打开即可使用
 
@@ -79,7 +79,7 @@ http://127.0.0.1:4173/
 步骤：
 
 ```bash
-git clone <你的仓库地址>
+git clone https://github.com/binli5021-gif/gongwen.git
 cd gongwen
 npm install
 npm run dev
