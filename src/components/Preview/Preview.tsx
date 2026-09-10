@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { startTransition, useDeferredValue, useMemo, useRef, useState, type ClipboardEvent, type CSSProperties } from 'react'
 import type { GongwenAST } from '../../types/ast'
 import { useDocumentConfig } from '../../contexts/useDocumentConfig'
 import { cmToPagePercent, CHARS_PER_LINE } from '../../types/documentConfig'
@@ -149,6 +149,27 @@ export function Preview({ ast }: PreviewProps) {
   const boldFirst = deferredConfig.specialOptions.boldFirstSentence
   const boldHeading3 = deferredConfig.specialOptions.boldHeading3
 
+  function handlePreviewCopy(event: ClipboardEvent<HTMLDivElement>) {
+    const selection = window.getSelection()
+    if (!selection || selection.isCollapsed || !selection.anchorNode) return
+    if (!event.currentTarget.contains(selection.anchorNode)) return
+
+    // 每个 A4Page 都为了视觉裁剪而渲染了一份完整内容流。
+    // 复制时只取第一页中的那一份完整内容，避免按页数重复粘贴到 Word。
+    const firstPage = event.currentTarget.querySelector('.a4-page')
+    const content = firstPage?.querySelector('.a4-content')
+    const flow = content?.querySelector('.a4-content-viewport > div')
+    if (!content || !flow) return
+
+    const paragraphs = Array.from(flow.querySelectorAll('p'))
+      .map((paragraph) => paragraph.textContent?.replace(/\u200B/g, '') ?? '')
+      .filter((text) => text.length > 0)
+
+    event.clipboardData.setData('text/plain', paragraphs.join('\n'))
+    event.clipboardData.setData('text/html', content.outerHTML)
+    event.preventDefault()
+  }
+
   return (
     <div className="preview-container">
       <div className="preview-header">
@@ -181,7 +202,7 @@ export function Preview({ ast }: PreviewProps) {
           </div>
         )}
       </div>
-      <div className="preview-scroll" style={cssVars}>
+      <div className="preview-scroll" style={cssVars} onCopy={handlePreviewCopy}>
         {/* 隐藏度量容器：渲染全部节点用于高度测量（与 A4Page 使用相同的 CSS 类和渲染逻辑） */}
         <div ref={measurerRef} className="a4-measurer" aria-hidden="true">
           <div className="a4-measurer-content">
