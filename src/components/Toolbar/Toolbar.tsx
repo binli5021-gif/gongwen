@@ -26,7 +26,9 @@ export const Toolbar = memo(function Toolbar({
   const hasContent = ast.title !== null || ast.body.length > 0
   const nodeCount = (ast.title ? 1 : 0) + ast.body.length
   const [showSettings, setShowSettings] = useState(false)
-  const displayVersion = __APP_VERSION__.split('-')[0]
+  const displayVersion = __APP_VERSION__.startsWith('v')
+    ? __APP_VERSION__.split('-')[0]
+    : `v${__APP_VERSION__.split('-')[0]}`
 
   // 隐藏的 file input 引用
   const fileInputRef = useRef<HTMLInputElement>(null)

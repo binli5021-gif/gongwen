@@ -27,6 +27,8 @@ const INDENT_SELECT_OPTIONS = INDENT_OPTIONS.map((opt) => ({
 }))
 
 const PROJECT_INFO = {
+  version: 'v1.0.1',
+  updatedAt: '2026年9月10日',
   repoUrl: 'https://github.com/binli5021-gif/gongwen',
   releasesUrl: 'https://github.com/binli5021-gif/gongwen/releases',
   authorEmail: 'binli5021@gmial.com',
@@ -36,6 +38,8 @@ const PROJECT_INFO = {
     '适合办公室、公文写作、社区和活动方案等正式文本的轻量规范化处理。',
   ],
   recentUpdates: [
+    '修复右侧预览全选复制到 Word 时文字按分页重复出现的问题。',
+    '补充版本号、更新日期和项目更新说明，便于确认线上版本。',
     '修复中文句号、冒号等标点在导出 Word 时掉到下一行行首的问题。',
     '增强标题层级自动纠偏，支持一至四级标题混写后的统一规范化。',
     '优化附件说明、基层单位落款识别，以及署名与日期的同页编排。',
@@ -661,6 +665,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             {showProjectInfo && (
               <div className="settings-info-card" id="settings-project-info" role="dialog" aria-label="项目信息">
                 <div className="settings-info-main">
+                  <div className="settings-info-item settings-info-version">
+                    <span className="settings-info-label">当前版本</span>
+                    <span className="settings-info-value">{PROJECT_INFO.version}</span>
+                    <span className="settings-info-date">更新日期：{PROJECT_INFO.updatedAt}</span>
+                  </div>
                   <div className="settings-info-item">
                     <span className="settings-info-label">项目信息</span>
                     <ul className="settings-info-list">
